@@ -24,10 +24,12 @@ const WhoisIP = require('./check');
 
 var whois = new WhoisIP();
 
+const ips_ipv4 = ['157.240.1.35', '104.244.42.1', '216.58.212.142', '193.0.6.139', '178.242.154.5', '178.242.154.7'];
+const ips_ipv6 = ['2001:67c:2e8:22::c100:68b'];
+
 // TODO: Proper testing.
 whois.connect().then(() => {
-  var ips = ['157.240.1.35', '104.244.42.1', '216.58.212.142', '193.0.6.139', '178.242.154.5', '178.242.154.7', '2001:67c:2e8:22::c100:68b'];
-  return whois.check(ips[0]).then((res) => {
+  return whois.check(ips_ipv4[0]).then((res) => {
     console.log(JSON.stringify(res.rdap, null, '  '));
     console.log(res.object_id);
     console.log(res.rdap.name);
