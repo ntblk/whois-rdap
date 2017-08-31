@@ -7,16 +7,23 @@ system supporting database-backed caching and distributed operation.
 
 <img src="https://netblocks.org/netblocks.png" width="100px" align="right" />
 
-whois-rdap is a caching WHOIS client library that looks up IPv4 and IPv6 addresses
-and finds registry records at ARIN, RIPE etc. Only the modern RDAP JSON protocol specified by [RFC7483](https://tools.ietf.org/html/rfc7483) (JSON Responses for the Registration Data Access Protocol) is supported. All addresses are mapped to the IPv6 address space for consistency.
+whois-rdap is a caching WHOIS client library that looks up IPv4 and IPv6
+addresses and finds registry records at ARIN, RIPE etc. Only the next-generation
+RDAP (Registration Data Access Protocol) Query Format specified by
+[RFC7482](https://tools.ietf.org/html/rfc7482) and
+[RFC7483](https://tools.ietf.org/html/rfc7483) response format are
+supported, allowing for structured retrieval and processing of registrar
+records. All addresses are mapped to the IPv6 address space for consistency.
 
-This package is maintained as part of the the [NetBlocks.org](https://netblocks.org) network observation framework.
+This package is maintained as part of the the
+[NetBlocks.org](https://netblocks.org) network observation framework.
 
 ## Features
 
 * IPv4 and IPv6 support
 * Database-backed NoSQL storage supporting schema-free queries
-* Client implementation of the RFC7483 RDAP REST/JSON protocol
+* Client implementation of RFC7482 REST protocol
+* Vendor-agnostic support for RFC7483 JSON data format and extensions
 * Legacy-free with no support for classic whois queries
 * Supports IP to ASN and ASN origin queries
 * node.js library API for embedded use in servers-side JavaScript applications
