@@ -8,7 +8,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
   "dependencies": {
     "axios": "^0.16.2",
     "debug": "^3.0.1",
