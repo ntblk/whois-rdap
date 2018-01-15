@@ -50,19 +50,21 @@ function ipToBuffer (parsedAddr) {
   return new Buffer(parsedAddr.toByteArray());
 }
 
-var DEFAULT_DB = 'mongodb://localhost:27017/mydb';
-var DEFAULT_COLLECTION = 'whois_ip';
+// TODO: Don't hard-code these
+var DEFAULT_DB_URL = 'mongodb://localhost:27017';
+var DEFAULT_DB_NAME = 'mydb';
+var DEFAULT_DB_COLLECTION = 'whois_ip';
 
 function WhoisIP () {
   return this;
 }
 
-WhoisIP.prototype.connect = function(url, collection) {
-  var self = this;
-  return MongoClient.connect(url || DEFAULT_DB).then((db) => {
-    self.db = db;
-    self.db_collection = db.collection(collection || DEFAULT_COLLECTION);
-    return self.configure();
+WhoisIP.prototype.connect = function(url, dbName, collection) {
+  return MongoClient.connect(url || DEFAULT_DB_URL).then(client => {
+    this.client = client;
+    this.db = client.db(dbName || DEFAULT_DB_NAME);
+    this.db_collection = this.db.collection(collection || DEFAULT_DB_COLLECTION);
+    return this.configure();
   });
 }
 
@@ -94,8 +96,11 @@ WhoisIP.prototype.check = function (addr) {
   .sort({date:-1}).limit(1).toArray()
   .then((docs) => {
     // TODO: Select best candidate record or return all?
-    if (docs.length)
-      return {rdap: docs[0].rdap, object_id: docs[0]._id};
+    if (docs.length) {
+      var docID = docs[0]._id;
+      debug("Using cached object: " + docID);
+      return {rdap: docs[0].rdap, object_id: docID};
+    }
 
     debug("Fetching RDAP with HTTP: " + addr);
     return fetchRDAP(addr).then((res) => {

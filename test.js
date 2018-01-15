@@ -36,8 +36,8 @@ whois.connect().then(() => {
     console.log(res.rdap.handle);
   });
 }).finally(() => {
-  if (whois.db)
-    return whois.db.close();
+  if (whois.client)
+    return whois.client.close();
 });
 
 function checkNotices() {

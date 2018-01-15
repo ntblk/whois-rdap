@@ -55,6 +55,6 @@ whois.connect().then(() => {
       console.error(res.object_id);
   });
 }).finally(() => {
-  if (whois.db)
-    return whois.db.close();
+  if (whois.client)
+    return whois.client.close();
 });
