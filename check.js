@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-const debug = require('debug')('whois-ip');
+const debug = require('debug')('whois-rdap');
 const MongoClient = require('mongodb').MongoClient;
 const Address4 = require('ip-address').Address4;
 const Address6 = require('ip-address').Address6;
