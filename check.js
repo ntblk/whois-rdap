@@ -47,7 +47,7 @@ function ipToBuffer (parsedAddr) {
   if (!parsedAddr.isValid())
     throw new Error('IP not valid');
   // TODO: toUnsignedByteArray()?
-  return new Buffer(parsedAddr.toByteArray());
+  return Buffer.from(parsedAddr.toByteArray());
 }
 
 // TODO: Don't hard-code these
