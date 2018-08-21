@@ -30,6 +30,8 @@ function query (ip) {
   var ip_str = ip.toString();
   var query_url = 'https://rdap.db.ripe.net/ip/' + ip_str;
   return axios.get(query_url, {
+    // TODO: Make timeout configurable
+    timeout: 2500,
     headers: {
       'Accept': 'application/rdap+json'
     }

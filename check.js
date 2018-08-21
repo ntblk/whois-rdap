@@ -27,11 +27,11 @@ const fetchRDAP = require('./fetch-rdap');
 // We use a variation of the db storage technique discussed here:
 // http://ddiguru.com/blog/156-how-to-store-ip-addresses-in-mongodb-using-javascript
 
-// FIXME: Cache 404 to avoid hammering the server?
+// TODO: Cache 404 to avoid hammering the server?
 // TODO: Remove fallback/default db/collection names?
 // TODO: Concurrency wait lock?
 // TODO: API throttling, HTTP proxy support?
-// TODO: Expire network records
+// FIXME: Expire network records
 
 function toV6 (addr) {
   // TODO: Validate that a single IP is specified, not a range
@@ -102,10 +102,10 @@ WhoisIP.prototype.check = function (addr) {
         { 'addr_range.0' : {$lte: ip_bin}},
         { 'addr_range.1' : {$gte: ip_bin}}
     ],
+    // FIXME: Allow expiery
   })
-  // FIXME: Allow expiery, revalidation
   .sort({
-    // TODO: we want the most specific! sort order?
+    // FIXME: sort and return the most specific network
     //'addr_range.0': -1,
     //'addr_range.1': 1,
     'date': -1,
