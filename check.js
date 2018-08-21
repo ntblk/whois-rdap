@@ -60,7 +60,8 @@ function WhoisIP () {
 }
 
 WhoisIP.prototype.connect = function(url, dbName, collection) {
-  return MongoClient.connect(url || DEFAULT_DB_URL).then(client => {
+  return MongoClient.connect(url || DEFAULT_DB_URL, { useNewUrlParser: true })
+  .then(client => {
     this.client = client;
     this.db = client.db(dbName || DEFAULT_DB_NAME);
     this.db_collection = this.db.collection(collection || DEFAULT_DB_COLLECTION);
