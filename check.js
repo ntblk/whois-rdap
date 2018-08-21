@@ -27,11 +27,12 @@ const fetchRDAP = require('./fetch-rdap');
 // We use a variation of the db storage technique discussed here:
 // http://ddiguru.com/blog/156-how-to-store-ip-addresses-in-mongodb-using-javascript
 
+// NOTE: Another data source, though it only supports RIPE, not ARIN etc.: https://rest.db.ripe.net/search.json?type-filter=inetnum&source=ripe&query-string=${IP}
+
 // TODO: Cache 404 to avoid hammering the server?
 // TODO: Remove fallback/default db/collection names?
 // TODO: Concurrency wait lock?
 // TODO: API throttling, HTTP proxy support?
-// FIXME: Expire network records
 
 function toV6 (addr) {
   // TODO: Validate that a single IP is specified, not a range
@@ -54,6 +55,9 @@ function ipToBuffer (parsedAddr) {
 var DEFAULT_DB_URL = 'mongodb://localhost:27017';
 var DEFAULT_DB_NAME = 'mydb';
 var DEFAULT_DB_COLLECTION = 'whois_ip';
+
+// Cache entries 'expire' after 180 days
+const TTL_SECS = 180 * 24 * 60 * 60;
 
 function WhoisIP () {
   return this;
@@ -78,7 +82,7 @@ WhoisIP.prototype.configure = function () {
 
   var indexes = [
     {'date': 1},
-    {"addr_range.0": 1, "addr_range.1": 1},
+    {"addr_range.0": 1, "addr_range.1": -1},
     // TODO: Use a hashed index to avoid duplicate entries when we re-fetch? But links sections include requested IP
     //{'rdap': 'hashed'}, //{ unique: true },
   ];
@@ -102,13 +106,14 @@ WhoisIP.prototype.check = function (addr) {
         { 'addr_range.0' : {$lte: ip_bin}},
         { 'addr_range.1' : {$gte: ip_bin}}
     ],
+    date: {$gte: new Date(Date.now() - TTL_SECS * 1000)},
     // FIXME: Allow expiery
   })
   .sort({
-    // FIXME: sort and return the most specific network
-    //'addr_range.0': -1,
-    //'addr_range.1': 1,
-    'date': -1,
+    // sort and return the most specific network
+    'addr_range.0': -1,
+    'addr_range.1': 1,
+    //'date': -1,
   }).limit(1).toArray()
   .then((docs) => {
     // TODO: Select best candidate record or return all?
@@ -122,6 +127,9 @@ WhoisIP.prototype.check = function (addr) {
     return fetchRDAP(addr)
     .then((res) => {
       var rdap = res.rdap;
+
+      // TODO: filter 'notices' and 'links' which contain request IP?
+
       var obj = {
         date: new Date(),
         addr_range: extractRange(rdap),
