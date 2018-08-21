@@ -59,14 +59,16 @@ function WhoisIP () {
   return this;
 }
 
-WhoisIP.prototype.connect = function(url, dbName, collection) {
+WhoisIP.prototype.connect = function(url) {
   return MongoClient.connect(url || DEFAULT_DB_URL, { useNewUrlParser: true })
-  .then(client => {
-    this.client = client;
-    this.db = client.db(dbName || DEFAULT_DB_NAME);
-    this.db_collection = this.db.collection(collection || DEFAULT_DB_COLLECTION);
-    return this.configure();
-  });
+  .then(client => this.use(client));
+}
+
+WhoisIP.prototype.use = function(client, dbName, collectionName) {
+  this.client = client;
+  this.db = client.db(dbName || DEFAULT_DB_NAME);
+  this.db_collection = this.db.collection(collectionName || DEFAULT_DB_COLLECTION);
+  return this.configure();
 }
 
 WhoisIP.prototype.configure = function () {
