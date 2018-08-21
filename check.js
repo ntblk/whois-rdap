@@ -69,11 +69,18 @@ WhoisIP.prototype.connect = function(url, dbName, collection) {
 }
 
 WhoisIP.prototype.configure = function () {
-  var coll = this.db_collection;
+  var c = this.db_collection;
   // TODO: Is this index actually working for [0,1] queries?
-  //return coll.createIndex({"addr_range": 1});
   //db.whois_ip.aggregate( [ { $indexStats: { } } ] )
-  return coll.createIndex({"addr_range.0": 1, "addr_range.1": 1});
+
+  var indexes = [
+    {'date': 1},
+    {"addr_range.0": 1, "addr_range.1": 1},
+    // TODO: Use a hashed index to avoid duplicate entries when we re-fetch? But links sections include requested IP
+    //{'rdap': 'hashed'}, //{ unique: true },
+  ];
+  indexes = indexes.map(e => ({key: e}));
+  return c.createIndexes(indexes);
 }
 
 WhoisIP.prototype.check = function (addr) {
@@ -93,7 +100,13 @@ WhoisIP.prototype.check = function (addr) {
         { 'addr_range.1' : {$gte: ip_bin}}
     ],
   })
-  .sort({date:-1}).limit(1).toArray()
+  // FIXME: Allow expiery, revalidation
+  .sort({
+    // TODO: we want the most specific! sort order?
+    //'addr_range.0': -1,
+    //'addr_range.1': 1,
+    'date': -1,
+  }).limit(1).toArray()
   .then((docs) => {
     // TODO: Select best candidate record or return all?
     if (docs.length) {
@@ -103,34 +116,39 @@ WhoisIP.prototype.check = function (addr) {
     }
 
     debug("Fetching RDAP with HTTP: " + addr);
-    return fetchRDAP(addr).then((res) => {
+    return fetchRDAP(addr)
+    .then((res) => {
       var rdap = res.rdap;
       var obj = {
         date: new Date(),
+        addr_range: extractRange(rdap),
         rdap: rdap,
       };
 
-      // Neither node-ip nor ip-address handle this properly so we do it ourselves
-      if (rdap.ipVersion === 'v4') {
-        obj.addr_range = [
-          ipToBuffer(Address6.fromAddress4(new Address4(rdap.startAddress).startAddress().address)),
-          ipToBuffer(Address6.fromAddress4(new Address4(rdap.endAddress).endAddress().address)),
-        ]
-      } else if (rdap.ipVersion === 'v6') {
-        obj.addr_range = [
-          ipToBuffer(new Address6(rdap.startAddress).startAddress()),
-          ipToBuffer(new Address6(rdap.endAddress).endAddress()),
-        ]
-      } else {
-        throw new Error ('Unsupported IP version: ' + rdap.ipVersion);
-      }
-
       // TODO: Don't request return val for perf?
-      return coll.insertOne(obj).then((res) => {
+      return coll.insertOne(obj)
+      .then((res) => {
         return {rdap: rdap, object_id: res.insertedId};
       });
     });
   });
+}
+
+function extractRange (rdap) {
+  // Neither node-ip nor ip-address handle this properly so we do it ourselves
+  if (rdap.ipVersion === 'v4') {
+    return [
+      ipToBuffer(Address6.fromAddress4(new Address4(rdap.startAddress).startAddress().address)),
+      ipToBuffer(Address6.fromAddress4(new Address4(rdap.endAddress).endAddress().address)),
+    ];
+  } else if (rdap.ipVersion === 'v6') {
+    return [
+      ipToBuffer(new Address6(rdap.startAddress).startAddress()),
+      ipToBuffer(new Address6(rdap.endAddress).endAddress()),
+    ];
+  } else {
+    throw new Error ('Unsupported IP version: ' + rdap.ipVersion);
+  }
 }
 
 /*
