@@ -93,17 +93,17 @@ WhoisIP.prototype.configure = function () {
 }
 
 function canonicalizeRdap (rdap) {
-  delete rdap.notices;
   fixup(rdap);
 
   function fixup (o) {
-    // links contain the requested IP
+    // links often contain the requested IP
     delete o.links;
-    if (o.entities === undefined)
-      return;
-    o.entities.forEach(e => {
+    (o.notices || []).forEach(e => {
+      fixup(e);
+    });
+    (o.entities || []).forEach(e => {
       // roles come unstably sorted from the server
-      e.roles.sort();
+      (e.roles || []).sort();
       fixup(e);
     });
   }
@@ -147,11 +147,7 @@ WhoisIP.prototype.check = function (addr) {
       var rdap = res.rdap;
       var addr_range = extractRange(rdap);
 
-      // FIXME: log the notices to db
-      var extra = {
-        notices: rdap.notices,
-      };
-
+      // TODO: log the notices to db?
       canonicalizeRdap(rdap);
 
       return coll.findOneAndUpdate(
