@@ -57,8 +57,8 @@ var DEFAULT_DB_URL = 'mongodb://localhost:27017';
 var DEFAULT_DB_NAME = 'mydb';
 var DEFAULT_DB_COLLECTION = 'whois_ip';
 
-// Cache entries 'expire' after 180 days
-const DEFAULT_TTL_SECS = 180 * 24 * 60 * 60;
+// Cache entries 'expire' after n days
+const DEFAULT_TTL_SECS = 7 * 24 * 60 * 60;
 
 function WhoisIP () {
   this.ttl_secs = DEFAULT_TTL_SECS;
