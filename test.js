@@ -26,6 +26,8 @@ const WhoisIP = require('./check');
 
 // export DEBUG=whois-rdap
 var whois = new WhoisIP();
+// Disable caching
+whois.ttl_secs = 0;
 
 const ips_ipv4 = ['157.240.1.35', '104.244.42.1', '216.58.212.142', '193.0.6.139', '178.242.154.5', '178.242.154.7'];
 const ips_ipv6 = ['2001:67c:2e8:22::c100:68b'];
@@ -53,21 +55,24 @@ async function testStability (range) {
 */
 }
 
+async function testBasic () {
+  var res;
+  res = await whois.check(ips_ipv4[0]);
+  //console.log(JSON.stringify(res.rdap, null, '  '));
+  console.log(res.object_id);
+  console.log(res.rdap.name);
+  console.log(res.rdap.handle);
+  // TODO: Test that revalidating raised validatedAt field
+}
+
 async function runTests () {
-  // Disable caching
-  whois.ttl_secs = 0;
+  await testBasic();
   await testStability('104.244.42.{1..4}');
   await testStability('157.240.1.{35..39}');
 }
 
 // TODO: Proper testing.
 whois.connect().then(() => {
-  return whois.check(ips_ipv4[0]).then((res) => {
-    //console.log(JSON.stringify(res.rdap, null, '  '));
-    console.log(res.object_id);
-    console.log(res.rdap.name);
-    console.log(res.rdap.handle);
-  });
 })
 .then(runTests)
 .finally(() => {
