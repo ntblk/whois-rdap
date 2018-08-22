@@ -58,10 +58,10 @@ var DEFAULT_DB_NAME = 'mydb';
 var DEFAULT_DB_COLLECTION = 'whois_ip';
 
 // Cache entries 'expire' after 180 days
-// TODO: Make this configurable
-const TTL_SECS = 180 * 24 * 60 * 60;
+const DEFAULT_TTL_SECS = 180 * 24 * 60 * 60;
 
 function WhoisIP () {
+  this.ttl_secs = DEFAULT_TTL_SECS;
   return this;
 }
 
@@ -125,7 +125,7 @@ WhoisIP.prototype.check = function (addr) {
         { 'addr_range.0' : {$lte: ip_bin}},
         { 'addr_range.1' : {$gte: ip_bin}}
     ],
-    validatedAt: {$gte: new Date(Date.now() - TTL_SECS * 1000)},
+    validatedAt: {$gte: new Date(Date.now() - this.ttl_secs * 1000)},
   })
   .sort({
     // sort and return the most specific network using our compound index prefix
