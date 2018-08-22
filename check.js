@@ -83,8 +83,8 @@ WhoisIP.prototype.configure = function () {
   //db.whois_ip.aggregate( [ { $indexStats: { } } ] )
 
   var simple_indexes = [
-    {'date': 1},
-    {"addr_range.0": 1, "addr_range.1": -1},
+    {'validatedAt': 1},
+    {"addr_range.0": 1, "addr_range.1": -1, "validatedAt": 1},
     {'rdap': 'hashed'},
   ];
 
@@ -125,14 +125,13 @@ WhoisIP.prototype.check = function (addr) {
         { 'addr_range.0' : {$lte: ip_bin}},
         { 'addr_range.1' : {$gte: ip_bin}}
     ],
-    date: {$gte: new Date(Date.now() - TTL_SECS * 1000)},
+    validatedAt: {$gte: new Date(Date.now() - TTL_SECS * 1000)},
   })
   .sort({
-    // sort and return the most specific network
+    // sort and return the most specific network using our compound index prefix
     'addr_range.0': -1,
     'addr_range.1': 1,
-    // FIXME: We need to sort by date too
-    //'date': -1,
+    'validatedAt': -1,
   }).limit(1).toArray()
   .then(docs => {
     if (docs.length) {
@@ -161,8 +160,8 @@ WhoisIP.prototype.check = function (addr) {
           rdap
         },
         {
-          $set: {date: date},
-          $setOnInsert: {createdAt: date},
+          $set: {validatedAt: date},
+          $setOnInsert: {date: date},
         },
         {
           upsert: true,
