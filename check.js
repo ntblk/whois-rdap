@@ -163,8 +163,9 @@ WhoisIP.prototype.revalidate = function (date, rdap) {
       rdap
     },
     {
-      $set: {validatedAt: date},
-      $setOnInsert: {date: date},
+      $max: {validatedAt: date},
+      $min: {date: date},
+      //$setOnInsert: {date: date},
     },
     {
       upsert: true,
