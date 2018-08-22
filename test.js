@@ -18,24 +18,59 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+const assert = require('assert');
 global.Promise = require('bluebird');
+const braces = require('braces');
 const _ = require('lodash');
 const WhoisIP = require('./check');
 
+// export DEBUG=whois-rdap
 var whois = new WhoisIP();
 
 const ips_ipv4 = ['157.240.1.35', '104.244.42.1', '216.58.212.142', '193.0.6.139', '178.242.154.5', '178.242.154.7'];
 const ips_ipv6 = ['2001:67c:2e8:22::c100:68b'];
 
+async function testStability (range) {
+  var ips = braces.expand(range);
+  var results = await Promise.mapSeries(ips, ip => whois.check(ip));
+
+  // assert that canonicalization has worked and all object_id are equal
+  const o = results[0];
+  _.each(results, r => {
+    assert(r.object_id.toString() === o.object_id.toString());
+    assert(_.isEqual(r.rdap, o.rdap));
+  })
+
+/*
+  var groups = _.groupBy(results, r => r.object_id.toString());
+  console.log(groups);
+  assert(Object.keys(groups).length === 1);
+*/
+
+/*
+  var matching = _.filter(results, r => r.object_id && r.object_id.toString() === results[0].object_id.toString());
+  assert(matching.length === results.length);
+*/
+}
+
+async function runTests () {
+  // Disable caching
+  whois.ttl_secs = 0;
+  await testStability('104.244.42.{1..4}');
+  await testStability('157.240.1.{35..39}');
+}
+
 // TODO: Proper testing.
 whois.connect().then(() => {
   return whois.check(ips_ipv4[0]).then((res) => {
-    console.log(JSON.stringify(res.rdap, null, '  '));
+    //console.log(JSON.stringify(res.rdap, null, '  '));
     console.log(res.object_id);
     console.log(res.rdap.name);
     console.log(res.rdap.handle);
   });
-}).finally(() => {
+})
+.then(runTests)
+.finally(() => {
   if (whois.client)
     return whois.client.close();
 });
