@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+const assert = require('assert');
 const debug = require('debug')('whois-rdap');
 const MongoClient = require('mongodb').MongoClient;
 const Address4 = require('ip-address').Address4;
@@ -57,6 +58,7 @@ var DEFAULT_DB_NAME = 'mydb';
 var DEFAULT_DB_COLLECTION = 'whois_ip';
 
 // Cache entries 'expire' after 180 days
+// TODO: Make this configurable
 const TTL_SECS = 180 * 24 * 60 * 60;
 
 function WhoisIP () {
@@ -80,14 +82,31 @@ WhoisIP.prototype.configure = function () {
   // TODO: Is this index actually working for [0,1] queries?
   //db.whois_ip.aggregate( [ { $indexStats: { } } ] )
 
-  var indexes = [
+  var simple_indexes = [
     {'date': 1},
     {"addr_range.0": 1, "addr_range.1": -1},
-    // TODO: Use a hashed index to avoid duplicate entries when we re-fetch? But links sections include requested IP
-    //{'rdap': 'hashed'}, //{ unique: true },
+    {'rdap': 'hashed'},
   ];
-  indexes = indexes.map(e => ({key: e}));
+
+  var indexes = simple_indexes.map(e => ({key: e}));
   return c.createIndexes(indexes);
+}
+
+function canonicalizeRdap (rdap) {
+  delete rdap.notices;
+  fixup(rdap);
+
+  function fixup (o) {
+    // links contain the requested IP
+    delete o.links;
+    if (o.entities === undefined)
+      return;
+    o.entities.forEach(e => {
+      // roles come unstably sorted from the server
+      e.roles.sort();
+      fixup(e);
+    });
+  }
 }
 
 WhoisIP.prototype.check = function (addr) {
@@ -107,16 +126,15 @@ WhoisIP.prototype.check = function (addr) {
         { 'addr_range.1' : {$gte: ip_bin}}
     ],
     date: {$gte: new Date(Date.now() - TTL_SECS * 1000)},
-    // FIXME: Allow expiery
   })
   .sort({
     // sort and return the most specific network
     'addr_range.0': -1,
     'addr_range.1': 1,
+    // FIXME: We need to sort by date too
     //'date': -1,
   }).limit(1).toArray()
-  .then((docs) => {
-    // TODO: Select best candidate record or return all?
+  .then(docs => {
     if (docs.length) {
       var docID = docs[0]._id;
       debug("Using cached object: " + docID);
@@ -126,20 +144,36 @@ WhoisIP.prototype.check = function (addr) {
     debug("Fetching RDAP with HTTP: " + addr);
     return fetchRDAP(addr)
     .then((res) => {
+      var date = new Date();
       var rdap = res.rdap;
+      var addr_range = extractRange(rdap);
 
-      // TODO: filter 'notices' and 'links' which contain request IP?
-
-      var obj = {
-        date: new Date(),
-        addr_range: extractRange(rdap),
-        rdap: rdap,
+      // FIXME: log the notices to db
+      var extra = {
+        notices: rdap.notices,
       };
 
-      // TODO: Don't request return val for perf?
-      return coll.insertOne(obj)
-      .then((res) => {
-        return {rdap: rdap, object_id: res.insertedId};
+      canonicalizeRdap(rdap);
+
+      return coll.findOneAndUpdate(
+        {
+          addr_range,
+          rdap
+        },
+        {
+          $set: {date: date},
+          $setOnInsert: {createdAt: date},
+        },
+        {
+          upsert: true,
+          projection: {_id: 1},
+          returnOriginal: false,
+        }
+      )
+      .then(res => {
+        assert(res.ok);
+        var value = res.value;
+        return {rdap: rdap, object_id: value._id};
       });
     });
   });
