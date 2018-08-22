@@ -145,32 +145,37 @@ WhoisIP.prototype.check = function (addr) {
     .then((res) => {
       var date = new Date();
       var rdap = res.rdap;
-      var addr_range = extractRange(rdap);
-
       // TODO: log the notices to db?
-      canonicalizeRdap(rdap);
-
-      return coll.findOneAndUpdate(
-        {
-          addr_range,
-          rdap
-        },
-        {
-          $set: {validatedAt: date},
-          $setOnInsert: {date: date},
-        },
-        {
-          upsert: true,
-          projection: {_id: 1},
-          returnOriginal: false,
-        }
-      )
-      .then(res => {
-        assert(res.ok);
-        var value = res.value;
-        return {rdap: rdap, object_id: value._id};
-      });
+      return this.revalidate(date, rdap);
     });
+  });
+}
+
+WhoisIP.prototype.revalidate = function (date, rdap) {
+  var coll = this.db_collection;
+
+  canonicalizeRdap(rdap);
+  var addr_range = extractRange(rdap);
+
+  return coll.findOneAndUpdate(
+    {
+      addr_range,
+      rdap
+    },
+    {
+      $set: {validatedAt: date},
+      $setOnInsert: {date: date},
+    },
+    {
+      upsert: true,
+      projection: {_id: 1},
+      returnOriginal: false,
+    }
+  )
+  .then(res => {
+    assert(res.ok);
+    var value = res.value;
+    return {rdap: rdap, object_id: value._id};
   });
 }
 
