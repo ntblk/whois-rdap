@@ -140,6 +140,7 @@ WhoisIP.prototype.check = function (addr) {
       return {rdap: docs[0].rdap, object_id: docID};
     }
 
+    // FIXME: If fetch fails, can we throttle future attempts? e.g. 400 error for entries with multiple countries
     debug("Fetching RDAP with HTTP: " + addr);
     return fetchRDAP(addr)
     .then((res) => {
