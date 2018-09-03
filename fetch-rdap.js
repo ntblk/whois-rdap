@@ -32,11 +32,25 @@ function query (ip) {
   return axios.get(query_url, {
     // TODO: Make timeout configurable
     timeout: 2500,
+    validateStatus: false,
     headers: {
       'Accept': 'application/rdap+json'
     }
   })
   .then(function (res) {
+    if (res.status === 400) {
+      // https://github.com/arineng/nicinfo/issues/21
+      var m = res.data.title.match(/^Multiple country: found in (.*) - (.*)$/);
+      if (m) {
+        return {rdap: {
+          errorCode: res.status,
+          ipVersion: /^[\d.]+$/.test(m[1]) ? 'v4' : 'v6',
+          startAddress: m[1],
+          endAddress: m[2],
+          ...res.data,
+        }};
+      }
+    }
     if (res.status != 200)
       throw new Error('Invalid HTTP status: ' + res.status);
     return {rdap: res.data};

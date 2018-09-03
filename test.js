@@ -55,6 +55,12 @@ async function testStability (range) {
 */
 }
 
+/*
+// TODO: test error synthesis
+// https://github.com/arineng/nicinfo/issues/21
+// https://rdap.db.ripe.net/ip/81.92.203.83
+*/
+
 async function testBasic () {
   var res;
   res = await whois.check(ips_ipv4[0]);
