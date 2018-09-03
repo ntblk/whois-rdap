@@ -42,7 +42,7 @@ function query (ip) {
       // https://github.com/arineng/nicinfo/issues/21
       var m = res.data.title.match(/^Multiple country: found in (.*) - (.*)$/);
       if (m) {
-        return {rdap: {
+        return {synthesized: true, rdap: {
           errorCode: res.status,
           ipVersion: /^[\d.]+$/.test(m[1]) ? 'v4' : 'v6',
           startAddress: m[1],

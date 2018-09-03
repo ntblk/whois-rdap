@@ -96,7 +96,7 @@ function canonicalizeRdap (rdap) {
   fixup(rdap);
 
   function fixup (o) {
-    // links often contain the requested IP
+    // redact all links, as they often contain the requested IP
     delete o.links;
     (o.notices || []).forEach(e => {
       fixup(e);
