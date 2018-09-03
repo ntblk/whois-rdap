@@ -26,6 +26,8 @@ const argv = require('yargs')
   .usage('Usage: $0 [options] [ip ...]')
   .example('$0 8.8.8.8', 'query the specified IPv4/IPv6 address')
   .demandCommand(1)
+  .boolean('force')
+  .alias('f', 'force')
   .boolean('verbose')
   .alias('v', 'verbose')
   .describe('v', 'enable verbose debug output')
@@ -45,6 +47,8 @@ var whois = new WhoisIP();
 // TODO: Pass verbose flag down to the backend
 
 whois.connect().then(() => {
+  if (argv.force)
+    whois.ttl_secs = 0;
   return whois.check(ips[0]).then((res) => {
     if (argv.pretty) {
       console.log(prettyjson.render(res.rdap));
