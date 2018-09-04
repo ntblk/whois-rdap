@@ -137,10 +137,14 @@ WhoisIP.prototype.check = function (addr) {
     if (docs.length) {
       var docID = docs[0]._id;
       debug("Using cached object: " + docID);
-      return {rdap: docs[0].rdap, object_id: docID};
+      return {
+        rdap: docs[0].rdap,
+        date: docs[0].validatedAt,
+        object_id: docID
+      };
     }
 
-    // FIXME: If fetch fails, can we throttle future attempts? e.g. 400 error for entries with multiple countries
+    // FIXME: If fetch fails, can we throttle future attempts and return older cached values?
     debug("Fetching RDAP with HTTP: " + addr);
     return fetchRDAP(addr)
     .then((res) => {
@@ -177,7 +181,11 @@ WhoisIP.prototype.revalidate = function (date, rdap) {
   .then(res => {
     assert(res.ok);
     var value = res.value;
-    return {rdap: rdap, object_id: value._id};
+    return {
+      rdap: rdap,
+      date: date,
+      object_id: value._id
+    };
   });
 }
 
