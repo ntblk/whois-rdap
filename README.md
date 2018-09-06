@@ -5,7 +5,7 @@ system supporting database-backed caching and distributed operation.
 
 ## Synopsis
 
-<img src="https://netblocks.org/netblocks.png" width="100px" align="right" />
+<img src="https://netblocks.org/files/netblocks-logo.png" width="200px" align="right" />
 
 whois-rdap is a caching WHOIS client library that looks up IPv4 and IPv6
 addresses and finds registry records at ARIN, RIPE etc. Only the next-generation
@@ -28,6 +28,7 @@ This package is maintained as part of the the
 * Supports IP to ASN and ASN origin queries
 * node.js library API for embedded use in servers-side JavaScript applications
 * CLI for ipwhois with optional pretty ANSI-colored console output
+* Workaround mode for RDAP [server quirks](https://github.com/arineng/nicinfo/issues/21)
 
 ## Usage
 
@@ -49,6 +50,8 @@ Commands:
   whois-rdap  RDAP IP WHOIS client
 
 Options:
+  --version      Show version number                                   [boolean]
+  -f, --force    avoid cache and force update                          [boolean]
   -v, --verbose  enable verbose debug output                           [boolean]
   -p, --pretty   pretty-print RDAP output                              [boolean]
   -h, --help     Show help                                             [boolean]
