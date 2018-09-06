@@ -23,6 +23,7 @@ const debug = require('debug')('whois-rdap');
 const MongoClient = require('mongodb').MongoClient;
 const Address4 = require('ip-address').Address4;
 const Address6 = require('ip-address').Address6;
+const ipaddr = require('ipaddr.js');
 const fetchRDAP = require('./fetch-rdap');
 
 // We use a variation of the db storage technique discussed here:
@@ -112,12 +113,13 @@ function canonicalizeRdap (rdap) {
 WhoisIP.prototype.check = function (addr) {
   var coll = this.db_collection;
 
-  var ip_addr = toV6(addr);
-
-  // TODO: Decide on error handling scheme
-  if (ip_addr.isLoopback() || ip_addr.isLinkLocal())
+  // First check for special purpose addresses. This isn't just cosmetic - regional RDAP servers return quirky answers so we need to be defensive
+  var ipa = ipaddr.process(addr);
+  // TODO: Decide on error handling scheme. Empty object is inconvenient for consumers.
+  if (!['unicast'].includes(ipa.range()))
     return Promise.resolve({});
 
+  var ip_addr = toV6(addr);
   var ip_bin = ipToBuffer(ip_addr);
 
   return coll.find({

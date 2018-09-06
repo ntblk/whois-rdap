@@ -69,6 +69,12 @@ async function testBasic () {
   console.log(res.rdap.name);
   console.log(res.rdap.handle);
   // TODO: Test that revalidating raised validatedAt field
+
+  // empty object for special-purpose addresses
+  res = await whois.check('2001:0db8:85a3:0000:0000:8a2e:0370:7334');
+  assert(JSON.stringify(res) === '{}');
+  res = await whois.check('192.168.1.1');
+  assert(JSON.stringify(res) === '{}');
 }
 
 async function runTests () {
