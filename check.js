@@ -79,7 +79,7 @@ WhoisIP.prototype.use = function(client, dbName, collectionName) {
 }
 
 WhoisIP.prototype.configure = function () {
-  var c = this.db_collection;
+  var coll = this.db_collection;
   // TODO: Is this index actually working for [0,1] queries?
   //db.whois_ip.aggregate( [ { $indexStats: { } } ] )
 
@@ -90,7 +90,7 @@ WhoisIP.prototype.configure = function () {
   ];
 
   var indexes = simple_indexes.map(e => ({key: e}));
-  return c.createIndexes(indexes);
+  return coll.createIndexes(indexes);
 }
 
 function canonicalizeRdap (rdap) {
@@ -110,15 +110,32 @@ function canonicalizeRdap (rdap) {
   }
 }
 
-WhoisIP.prototype.check = function (addr) {
+WhoisIP.prototype.check = async function (addr) {
   var coll = this.db_collection;
 
   // First check for special purpose addresses. This isn't just cosmetic - regional RDAP servers return quirky answers so we need to be defensive
   var ipa = ipaddr.process(addr);
   // TODO: Decide on error handling scheme. Empty object is inconvenient for consumers.
   if (!['unicast'].includes(ipa.range()))
-    return Promise.resolve({});
+    return {};
 
+  var res = null;
+
+  if (this.ttl_secs > 0 && coll)
+    res = await this.query(addr);
+
+  // TODO: Support an offline/fallback mode
+  if (!res) {
+    res = await this.fetch(addr);
+    if (coll)
+      res = await this.revalidate(res);
+  }
+
+  return res;
+};
+
+WhoisIP.prototype.query = function (addr) {
+  var coll = this.db_collection;
   var ip_addr = toV6(addr);
   var ip_bin = ipToBuffer(ip_addr);
 
@@ -136,32 +153,35 @@ WhoisIP.prototype.check = function (addr) {
     'validatedAt': -1,
   }).limit(1).toArray()
   .then(docs => {
-    if (docs.length) {
-      var docID = docs[0]._id;
-      debug("Using cached object: " + docID);
-      return {
-        rdap: docs[0].rdap,
-        date: docs[0].validatedAt,
-        object_id: docID
-      };
-    }
+    var doc = docs[0];
+    if (!doc)
+      return null;
 
-    // FIXME: If fetch fails, can we throttle future attempts and return older cached values?
-    debug("Fetching RDAP with HTTP: " + addr);
-    return fetchRDAP(addr)
-    .then((res) => {
-      var date = new Date();
-      var rdap = res.rdap;
-      // TODO: log the notices to db?
-      return this.revalidate(date, rdap);
-    });
+    debug("Using cached object: " + doc._id);
+    return {
+      date: doc.validatedAt,
+      rdap: doc.rdap,
+      object_id: doc._id
+    };
   });
 }
 
-WhoisIP.prototype.revalidate = function (date, rdap) {
-  var coll = this.db_collection;
+WhoisIP.prototype.fetch = function (addr) {
+  // FIXME: If fetch fails, can we throttle future attempts and return older cached values?
+  debug("Fetching RDAP with HTTP: " + addr);
+  return fetchRDAP(addr)
+  .then(res => {
+    // TODO: log the notices to db?
+    canonicalizeRdap(res.rdap);
+    return {
+      date: new Date(),
+      rdap: res.rdap
+    };
+  });
+}
 
-  canonicalizeRdap(rdap);
+WhoisIP.prototype.revalidate = function ({date, rdap}) {
+  var coll = this.db_collection;
   var addr_range = extractRange(rdap);
 
   return coll.findOneAndUpdate(
@@ -182,11 +202,11 @@ WhoisIP.prototype.revalidate = function (date, rdap) {
   )
   .then(res => {
     assert(res.ok);
-    var value = res.value;
+    var doc = res.value;
     return {
-      rdap: rdap,
       date: date,
-      object_id: value._id
+      rdap: rdap,
+      object_id: doc._id
     };
   });
 }

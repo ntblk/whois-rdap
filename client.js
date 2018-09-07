@@ -49,7 +49,16 @@ const ips = argv._;
 var whois = new WhoisIP();
 // TODO: Pass verbose flag down to the backend
 
-whois.connect().then(() => {
+whois.connect()
+.catch(err => {
+  if (!VERBOSE)
+    return;
+  // TODO: Other db calls can still throw and will be uncaught
+  if (err.name === 'MongoNetworkError')
+    console.error('no database cache');
+  else
+    console.error(err);
+}).then(() => {
   if (argv.force)
     whois.ttl_secs = 0;
   return whois.check(ips[0]).then((res) => {
