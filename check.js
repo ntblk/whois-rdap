@@ -208,7 +208,11 @@ function toV6 (addr) {
 }
 
 function ipToBuffer (parsedAddr) {
-  return Buffer.from(parsedAddr.toByteArray());
+  var arr = parsedAddr.toByteArray();
+  while (arr.length < 16)
+    arr.unshift(0);
+  assert(arr.length == 16);
+  return Buffer.from(arr);
 }
 
 function ipToBufferRange (parsedAddr) {
@@ -233,5 +237,13 @@ function extractBufferRange (rdap) {
 
   return range;
 }
+
+/*
+var addr = '2001:67c:4e8:fa60:3:0:811:134';
+console.log(ipToBufferRange(toV6(addr)));
+
+var addr = '192.168.1.1';
+console.log(ipToBufferRange(toV6(addr)));
+*/
 
 module.exports = WhoisIP;
