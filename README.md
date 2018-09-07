@@ -3,6 +3,8 @@
 A fast, concurrent RDAP client library for the next-generation IP WHOIS lookup
 system supporting database-backed caching and distributed operation.
 
+[![NPM Version][npm-image]][npm-url]
+
 ## Synopsis
 
 <img src="https://netblocks.org/files/netblocks-logo.png" width="200px" align="right" />
