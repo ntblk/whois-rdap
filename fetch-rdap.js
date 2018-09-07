@@ -51,8 +51,11 @@ function query (ip) {
         }};
       }
     }
-    if (res.status != 200)
+    if (res.status != 200) {
+      // TODO: report this condition properly
+      console.error(res.data);
       throw new Error('Invalid HTTP status: ' + res.status);
+    }
     return {rdap: res.data};
   })
 }
