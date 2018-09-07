@@ -1,13 +1,17 @@
 ## whois-rdap
 
-A fast, concurrent RDAP client library for the next-generation IP WHOIS lookup
+<img src="https://netblocks.org/images/art/netblocks-hardware-probes.png" width="200px" align="right" />
+
+``whois-rdap`` is a fast, concurrent RDAP client library for the next-generation IP WHOIS lookup
 system supporting database-backed caching and distributed operation.
+
+It has been deployed in production to deliver insights on network ownership, digital rights and the state of internet governance around the world.
 
 [![NPM Version][npm-image]][npm-url]
 
 ## Synopsis
 
-<img src="https://netblocks.org/files/netblocks-logo.png" width="200px" align="right" />
+<img src="https://netblocks.org/files/netblocks-logo.png" width="200px" align="left" alt="NetBlocks" style="margin: 0.5em;" />
 
 whois-rdap is a caching WHOIS client library that looks up IPv4 and IPv6
 addresses and finds registry records at ARIN, RIPE etc. Only the next-generation
@@ -32,9 +36,9 @@ This package is maintained as part of the the
 * CLI for ipwhois with optional pretty ANSI-colored console output
 * Workaround mode for RDAP [server quirks](https://github.com/arineng/nicinfo/issues/21)
 
-## Usage
+## Getting started: Usage and integration
 
-### Command-line utility
+### Command-line lookup utility
 
 A basic command-line utility is included that can be used for testing or to seed and exist a deployed cache instance.
 
@@ -44,7 +48,7 @@ $ npm install -g whois-rdap
 
 After installing globally the utility should be available on your PATH:
 
-```bash
+```
 $ whois-rdap -h
 Usage: whois-rdap [options] [ip ...]
 
@@ -64,14 +68,13 @@ Examples:
 The NetBlocks Project <https://netblocks.org>
 ```
 
-### API
+### Developer API
 
 #### Installation
 
 ```bash
 $ npm install whois-rdap
 ```
-#### Usage
 
 `whois-rdap` exposes a Promise-based asynchronous programming interface.
 
