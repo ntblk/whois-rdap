@@ -44,7 +44,7 @@ $ npm install -g whois-rdap
 
 After installing globally the utility should be available on your PATH:
 
-```
+```bash
 $ whois-rdap -h
 Usage: whois-rdap [options] [ip ...]
 
@@ -66,12 +66,40 @@ The NetBlocks Project <https://netblocks.org>
 
 ### API
 
+#### Installation
+
 ```bash
 $ npm install whois-rdap
 ```
+#### Usage
 
-See the tests for usage examples.
+`whois-rdap` exposes a Promise-based asynchronous programming interface.
+
+A data store instance can optionally be supplied to enable persistence and caching of results.
+
+```js
+const whois = require('whois-rdap');
+
+whois.check('2001:67c:4e8:fa60:3:0:811:134');
+{
+  "handle": "2001:67c:4e8::/48",
+  "startAddress": "2001:67c:4e8::/128",
+  "endAddress": "2001:67c:4e8:ffff:ffff:ffff:ffff:ffff/128",
+  "ipVersion": "v6",
+  "name": "Telegram_Messenger_Network",
+  "type": "ASSIGNED PI",
+  "country": "NL",
+  "parentHandle": "EU-ZZ-2001-678",
+  "entities": [
+...
+```
+
+Tests and sources are currently the best place to look for usage examples.
 
 ## Status
 
-This library provides direct access to query responses and tries not to make assumptions about the content.
+This library provides caching and deduplication and is used in production. The bootstrap mechanism has not yet been implemented.
+
+[npm-image]: https://img.shields.io/npm/v/whois-rdap.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/whois-rdap
+[npm-downloads]: https://img.shields.io/npm/dm/whois-rdap.svg?style=flat-square
