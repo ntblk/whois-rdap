@@ -234,26 +234,4 @@ function extractBufferRange (rdap) {
   return range;
 }
 
-/*
-// Alternative implementation. Broken due to node-ip bugs.
-
-const ip = require('ip');
-
-function toV6Format (addr) {
-  return ip.isV4Format(addr) ? ('::ffff:' + addr) : addr;
-}
-
-function toV6Buffer (addr) {
-  return ip.toBuffer(toV6Format(addr));
-}
-
-function check(rdap) {
-  // NOTE: cidrSubnet() seems broken with ipv6
-  return {
-    start_addr: toV6Buffer(ip.cidrSubnet(rdap.startAddress).firstAddress),
-    end_addr: toV6Buffer(ip.cidrSubnet(rdap.endAddress).lastAddress),
-  }
-}
-*/
-
 module.exports = WhoisIP;
