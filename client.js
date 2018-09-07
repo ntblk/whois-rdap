@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+//
 // Copyright (c) 2017 NetBlocks Project <https://netblocks.org>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
