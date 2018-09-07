@@ -71,10 +71,21 @@ async function testBasic () {
   // TODO: Test that revalidating raised validatedAt field
 
   // empty object for special-purpose addresses
-  res = await whois.check('2001:0db8:85a3:0000:0000:8a2e:0370:7334');
+  res = await whois.checkOne('2001:0db8:85a3:0000:0000:8a2e:0370:7334');
   assert(JSON.stringify(res) === '{}');
-  res = await whois.check('192.168.1.1');
+  res = await whois.checkOne('192.168.1.1');
   assert(JSON.stringify(res) === '{}');
+
+  // Test specificity
+  res1 = res = await whois.check('8.8.0.0/16');
+  assert(res.rdap.name === "LVLT-ORG-8-8");
+  res2 = res = await whois.check('8.8.8.8');
+  assert(res.rdap.name === 'LVLT-GOGL-8-8-8');
+  res3 = res = await whois.check('8.8.8.0/24');
+  assert(res.rdap.name === 'LVLT-GOGL-8-8-8');
+  assert(res2.object_id.toString() === res3.object_id.toString());
+
+  // TODO: test that 8.8.8.8/24 = invalid syntax
 }
 
 async function runTests () {

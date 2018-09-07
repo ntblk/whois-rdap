@@ -36,23 +36,6 @@ const fetchRDAP = require('./fetch-rdap');
 // TODO: Concurrency wait lock?
 // TODO: API throttling, HTTP proxy support?
 
-function toV6 (addr) {
-  // TODO: Validate that a single IP is specified, not a range
-  var v6;
-  v6 = new Address6(addr);
-  if (v6.isValid())
-    return v6;
-  v6 = Address6.fromAddress4(addr);
-  return v6;
-}
-
-function ipToBuffer (parsedAddr) {
-  if (!parsedAddr.isValid())
-    throw new Error('IP not valid');
-  // TODO: toUnsignedByteArray()?
-  return Buffer.from(parsedAddr.toByteArray());
-}
-
 // TODO: Don't hard-code these
 var DEFAULT_DB_URL = 'mongodb://localhost:27017';
 var DEFAULT_DB_NAME = 'mydb';
@@ -110,15 +93,17 @@ function canonicalizeRdap (rdap) {
   }
 }
 
-WhoisIP.prototype.check = async function (addr) {
-  var coll = this.db_collection;
-
+WhoisIP.prototype.checkOne = async function (addr) {
   // First check for special purpose addresses. This isn't just cosmetic - regional RDAP servers return quirky answers so we need to be defensive
   var ipa = ipaddr.process(addr);
   // TODO: Decide on error handling scheme. Empty object is inconvenient for consumers.
   if (!['unicast'].includes(ipa.range()))
     return {};
+  return this.check(addr);
+}
 
+WhoisIP.prototype.check = async function (addr) {
+  var coll = this.db_collection;
   var res = null;
 
   if (this.ttl_secs > 0 && coll)
@@ -137,12 +122,12 @@ WhoisIP.prototype.check = async function (addr) {
 WhoisIP.prototype.query = function (addr) {
   var coll = this.db_collection;
   var ip_addr = toV6(addr);
-  var ip_bin = ipToBuffer(ip_addr);
+  var ip_bin = ipToBufferRange(ip_addr);
 
   return coll.find({
     $and: [
-        { 'addr_range.0' : {$lte: ip_bin}},
-        { 'addr_range.1' : {$gte: ip_bin}}
+        { 'addr_range.0' : {$lte: ip_bin[0]}},
+        { 'addr_range.1' : {$gte: ip_bin[1]}}
     ],
     validatedAt: {$gte: new Date(Date.now() - this.ttl_secs * 1000)},
   })
@@ -182,7 +167,7 @@ WhoisIP.prototype.fetch = function (addr) {
 
 WhoisIP.prototype.revalidate = function ({date, rdap}) {
   var coll = this.db_collection;
-  var addr_range = extractRange(rdap);
+  var addr_range = extractBufferRange(rdap);
 
   return coll.findOneAndUpdate(
     {
@@ -211,21 +196,42 @@ WhoisIP.prototype.revalidate = function ({date, rdap}) {
   });
 }
 
-function extractRange (rdap) {
-  // Neither node-ip nor ip-address handle this properly so we do it ourselves
-  if (rdap.ipVersion === 'v4') {
-    return [
-      ipToBuffer(Address6.fromAddress4(new Address4(rdap.startAddress).startAddress().address)),
-      ipToBuffer(Address6.fromAddress4(new Address4(rdap.endAddress).endAddress().address)),
-    ];
-  } else if (rdap.ipVersion === 'v6') {
-    return [
-      ipToBuffer(new Address6(rdap.startAddress).startAddress()),
-      ipToBuffer(new Address6(rdap.endAddress).endAddress()),
-    ];
-  } else {
+function toV6 (addr) {
+  var v6;
+  v6 = new Address6(addr);
+  if (v6.isValid())
+    return v6;
+  v6 = Address6.fromAddress4(addr);
+  if (v6.isValid())
+    return v6;
+  throw new Error('IP not valid');
+}
+
+function ipToBuffer (parsedAddr) {
+  return Buffer.from(parsedAddr.toByteArray());
+}
+
+function ipToBufferRange (parsedAddr) {
+  if (!parsedAddr.isValid())
+    throw new Error('IP not valid');
+  var res = [parsedAddr.startAddress(), parsedAddr.endAddress()];
+  return res.map(v => ipToBuffer(v));
+}
+
+function extractBufferRange (rdap) {
+  var range = [rdap.startAddress, rdap.endAddress];
+
+  if (rdap.ipVersion === 'v4')
+    range = range.map(v => Address6.fromAddress4(v));
+  else if (rdap.ipVersion === 'v6')
+    range = range.map(v => new Address6(v));
+  else
     throw new Error ('Unsupported IP version: ' + rdap.ipVersion);
-  }
+
+  range = [range[0].startAddress(), range[1].endAddress()];
+  range = range.map(v => ipToBuffer(v));
+
+  return range;
 }
 
 /*
