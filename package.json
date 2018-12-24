@@ -19,17 +19,17 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "bluebird": "^3.5.2",
-    "debug": "^3.0.1",
+    "bluebird": "^3.5.3",
+    "debug": "^4.1.1",
     "ip-address": "^5.8.8",
     "ipaddr.js": "^1.8.1",
-    "mongodb": "^3.1.4",
+    "mongodb": "^3.1.10",
     "prettyjson": "^1.2.1",
-    "yargs": "^12.0.1"
+    "yargs": "^12.0.5"
   },
   "devDependencies": {
     "braces": "^2.3.2",
-    "lodash": "^4.17.4"
+    "lodash": "^4.17.11"
   },
   "bin": {
     "whois-rdap": "./client.js"
