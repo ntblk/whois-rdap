@@ -47,6 +47,7 @@ const VERBOSE = argv.verbose;
 const ips = argv._;
 
 var whois = new WhoisIP();
+whois.http_timeout = 20000;
 // TODO: Pass verbose flag down to the backend
 
 whois.connect()

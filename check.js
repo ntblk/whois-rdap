@@ -46,6 +46,7 @@ const DEFAULT_TTL_SECS = 7 * 24 * 60 * 60;
 
 function WhoisIP () {
   this.ttl_secs = DEFAULT_TTL_SECS;
+  this.http_timeout = 2500;
   return this;
 }
 
@@ -154,7 +155,7 @@ WhoisIP.prototype.query = function (addr) {
 WhoisIP.prototype.fetch = function (addr) {
   // FIXME: If fetch fails, can we throttle future attempts and return older cached values?
   debug("Fetching RDAP with HTTP: " + addr);
-  return fetchRDAP(addr)
+  return fetchRDAP(addr, {timeout: this.http_timeout})
   .then(res => {
     // TODO: log the notices to db?
     canonicalizeRdap(res.rdap);
