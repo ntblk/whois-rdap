@@ -110,8 +110,8 @@ WhoisIP.prototype.check = async function (addr) {
   if (this.ttl_secs > 0 && coll)
     res = await this.query(addr);
 
-  // TODO: Support an offline/fallback mode
-  if (!res) {
+  // We support offline/fallback mode with 0/negative http_timeout
+  if (!res && this.http_timeout > 0) {
     res = await this.fetch(addr);
     if (coll)
       res = await this.revalidate(res);
