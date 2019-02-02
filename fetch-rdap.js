@@ -30,7 +30,6 @@ function query (ip, {timeout = 2500} = {}) {
   var ip_str = ip.toString();
   var query_url = 'https://rdap.db.ripe.net/ip/' + ip_str;
   return axios.get(query_url, {
-    // TODO: Make timeout configurable
     timeout,
     validateStatus: false,
     headers: {
@@ -54,8 +53,8 @@ function query (ip, {timeout = 2500} = {}) {
     if (res.status != 200) {
       // TODO: report this condition properly
       // FIXME: pretty print the problematic host to help identify broken rdap servers!
-      console.error(res.data);
-      throw new Error('Invalid HTTP status: ' + res.status);
+      console.error(JSON.stringify(res.data, null, 2));
+      throw new Error(`Invalid HTTP status: ${res.status} for ${ip}`);
     }
     return {rdap: res.data};
   })
