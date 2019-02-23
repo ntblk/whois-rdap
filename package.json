@@ -22,10 +22,10 @@
     "bluebird": "^3.5.3",
     "debug": "^4.1.1",
     "ip-address": "^5.8.8",
-    "ipaddr.js": "^1.8.1",
-    "mongodb": "^3.1.10",
+    "ipaddr.js": "^1.9.0",
+    "mongodb": "^3.1.13",
     "prettyjson": "^1.2.1",
-    "yargs": "^12.0.5"
+    "yargs": "^13.2.1"
   },
   "devDependencies": {
     "braces": "^2.3.2",
