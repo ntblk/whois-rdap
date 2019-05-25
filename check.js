@@ -70,7 +70,7 @@ WhoisIP.prototype.configure = function () {
   var simple_indexes = [
     // TODO: Redundant index?
     {'validatedAt': 1},
-    {"addr_range.0": 1, "addr_range.1": -1, "validatedAt": 1},
+    {"addr_range.0": 1, "addr_range.1": -1},
     {'rdap': 'hashed'},
   ];
 
