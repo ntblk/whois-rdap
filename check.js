@@ -55,11 +55,12 @@ WhoisIP.prototype.connect = function(url) {
   .then(client => this.use(client));
 }
 
-WhoisIP.prototype.use = function(client, dbName, collectionName) {
+WhoisIP.prototype.use = async function(client, dbName, collectionName) {
   this.client = client;
   this.db = client.db(dbName || DEFAULT_DB_NAME);
   this.db_collection = this.db.collection(collectionName || DEFAULT_DB_COLLECTION);
-  return this.configure();
+  if (await this.db_collection.estimatedDocumentCount() === 0)
+    await this.configure();
 }
 
 WhoisIP.prototype.configure = function () {
