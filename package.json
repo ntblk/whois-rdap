@@ -1,6 +1,6 @@
 {
   "name": "whois-rdap",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "RDAP client for RFC7482 IP WHOIS lookups supporting database-backed caching",
   "author": "NetBlocks Team <team@netblocks.org>",
   "homepage": "https://netblocks.org/",
