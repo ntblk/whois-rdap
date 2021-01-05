@@ -18,7 +18,7 @@
     "test": "node test.js"
   },
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "bluebird": "^3.5.4",
     "debug": "^4.1.1",
     "ip-address": "^5.9.0",
